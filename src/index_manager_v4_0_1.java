@@ -1,14 +1,8 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Vector;
 
 
 public class index_manager_v4_0_1 {
@@ -56,8 +50,6 @@ public class index_manager_v4_0_1 {
             {
                 if (is_find_begin)
                 {
-//                    System.out.println("begin  :" + begin);
-//                    System.out.println("end  :" + end);
                     is_find_begin = false;
                     token = new_line.substring(begin, end + 1);
 
@@ -105,9 +97,10 @@ public class index_manager_v4_0_1 {
     public final Vector<token_relative_position_frequency_t> gen_token_relative_position_frequency_vec(
             final Vector<String> query) {
         Vector<token_relative_position_frequency_t> token_relative_position_frequency_vec = new Vector<token_relative_position_frequency_t>();
-        for (long relative_position = 0; relative_position < query.size(); ++relative_position) {
-            final String token = query.elementAt((int) relative_position);
+        for (int relative_position = 0; relative_position < query.size(); ++relative_position) {
+            final String token = query.elementAt(relative_position);
             long frequency = calc_frequency(token);
+//            System.out.println("token : " + token + "   frequency : " + frequency + "  relative_position : " + relative_position);
             token_relative_position_frequency_vec
                     .add(new token_relative_position_frequency_t(token, relative_position, frequency));
         }
@@ -120,7 +113,12 @@ public class index_manager_v4_0_1 {
         if (_inverted_index.containsKey(token)) {
             HashMap<Long, Vector<position_offset_t>> inverted_index_iter = _inverted_index.get(token);
             long frequency = 0;
-            frequency += inverted_index_iter.size();
+            Set entrySet =  inverted_index_iter.entrySet();
+            for(Object object : entrySet){
+                Entry entry=(Entry)object;
+                Vector<position_offset_t> position_vector = (Vector<position_offset_t>)entry.getValue();
+                frequency += position_vector.size();
+            }
             return frequency;
         } else {
             return 0;
@@ -138,20 +136,19 @@ public class index_manager_v4_0_1 {
         }
         HashMap<Long, Vector<position_offset_t>> intersection_doc_id_map = _inverted_index.get(first_token);
         for (int i = 1; i < token_relative_position_frequency_vec.size(); ++i) {
-            final token_relative_position_frequency_t token_relative_position_frequency = token_relative_position_frequency_vec
-                    .elementAt(i);
-            final String token = first_token_relative_position_frequency.token;
-            final long relative_position = first_token_relative_position_frequency.relative_position;
+            final token_relative_position_frequency_t token_relative_position_frequency = token_relative_position_frequency_vec.elementAt(i);
+            final String token = token_relative_position_frequency.token;
+            final long relative_position = token_relative_position_frequency.relative_position;
             if (!_inverted_index.containsKey(token)) {
                 return null;
             }
             final HashMap<Long, Vector<position_offset_t>> doc_id_map = _inverted_index.get(token);
             Iterator it = intersection_doc_id_map.entrySet().iterator();
             while (it.hasNext()) {
-                Map.Entry<Long, Vector<position_offset_t>> entry = (Entry<Long, Vector<position_offset_t>>) it.next();
+                Entry<Long, Vector<position_offset_t>> entry = (Entry<Long, Vector<position_offset_t>>) it.next();
                 final Long doc_id = entry.getKey();
                 if (!doc_id_map.containsKey(doc_id)) {
-                    intersection_doc_id_map.remove(doc_id);
+                    it.remove();
                     continue;
                 }
                 Vector<position_offset_t> intersection_position_offset_vec = entry.getValue();
@@ -177,7 +174,7 @@ public class index_manager_v4_0_1 {
                     }
                 }
                 if (slow == 0) {
-                    intersection_doc_id_map.remove(doc_id);
+                    it.remove();
                     continue;
                 }
                 // C++ resize
@@ -191,7 +188,7 @@ public class index_manager_v4_0_1 {
         // HashMap<Long,Vector<position_offset_t>>
         Iterator it = intersection_doc_id_map.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry<Long, Vector<position_offset_t>> entry = (Entry<Long, Vector<position_offset_t>>) it.next();
+            Entry<Long, Vector<position_offset_t>> entry = (Entry<Long, Vector<position_offset_t>>) it.next();
             final Long doc_id = entry.getKey();
             if (!temp_doc_id_map.containsKey(doc_id)) {
                 temp_doc_id_map.put(doc_id, new Vector<position_offset_t>());

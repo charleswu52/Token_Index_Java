@@ -2,9 +2,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Vector;
+import java.util.*;
 
 public class test_field_manager {
     static final String field = "query.txt";
@@ -27,14 +25,27 @@ public class test_field_manager {
             long set_size = 0;
             if (is_union) {
                 final HashSet<Long> union_set = manager.retrieve_field_union(field, query);
-                set_size = union_set.size();
+                if(union_set == null){
+                    set_size = 0;
+                }else{
+                    set_size = union_set.size();
+                }
+//                set_size = union_set.size();
                 if (is_out)
                     System.out.println(query + ":" + union_set);
             } else {
+//                System.out.println("query :" + query);
+//                System.out.println("query_line :" + query_line);
                 final HashMap<Long, Vector<position_offset_t>> intersection_set = manager
                         .retrieve_field_intersection(field, query, query_line);
 //                System.out.println(intersection_set);
-                set_size = intersection_set.size();
+                if(intersection_set == null){
+                    set_size = 0;
+                }else{
+                    set_size = intersection_set.size();
+                }
+//                System.out.println("set-size : " + set_size);
+//              set_size = intersection_set.size();
                 if (is_out)
                     System.out.println(query + ":" + intersection_set);
             }
